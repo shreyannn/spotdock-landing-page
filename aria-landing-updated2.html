@@ -1,0 +1,4672 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpotDock — Music Player for Mac</title>
+  <meta name="description"
+    content="A floating music player that lives in your Mac menu bar. Multiple layouts, real-time lyrics, zero friction.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@100..900&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #050505;
+      --bg2: #0a0a0a;
+      --surface: rgba(255, 255, 255, 0.04);
+      --surface2: rgba(255, 255, 255, 0.07);
+      --border: rgba(255, 255, 255, 0.08);
+      --border2: rgba(255, 255, 255, 0.14);
+      --text: #f5f5f7;
+      --text2: rgba(245, 245, 247, 0.56);
+      --text3: rgba(245, 245, 247, 0.32);
+      --accent: #0a84ff;
+      --accent-glow: rgba(10, 132, 255, 0.2);
+      --green: #30d158;
+      --red: #ff453a;
+      --yellow: #ffd60a;
+      --glass-bg: rgba(28, 28, 30, 0.82);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --menu-bar-h: 28px;
+
+      /* Theme specific defaults */
+      --popup-w: 300px;
+      --player-border-radius: 34px;
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      padding: 0 40px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    .nav-logo-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #1c1c1e, #2c2c2e);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text2);
+      list-style: none;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: inherit;
+      transition: color .18s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text)
+    }
+
+    .nav-cta {
+      padding: 6px 16px;
+      border-radius: 20px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: -0.1px;
+      border: none;
+      cursor: pointer;
+      transition: opacity .18s, transform .15s;
+      text-decoration: none;
+      box-shadow: 0 0 0 0 transparent;
+    }
+
+    .nav-cta:hover {
+      opacity: .88;
+      transform: translateY(-1px)
+    }
+
+    nav {
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .nav-fade-out {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-10px);
+    }
+
+    /* ─── HERO ─── */
+    #hero {
+      padding-top: 52px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-text-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 72px 48px 56px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--accent);
+      background: rgba(10, 132, 255, 0.1);
+      border: 1px solid rgba(10, 132, 255, 0.22);
+      padding: 5px 12px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+    }
+
+    .hero-tag-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: tag-pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes tag-pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .5;
+        transform: scale(.8)
+      }
+    }
+
+    .hero-h1 {
+      font-size: clamp(2.6rem, 6vw, 5.2rem);
+      font-weight: 700;
+      line-height: 1.04;
+      letter-spacing: -0.04em;
+      margin-bottom: 20px;
+      max-width: 780px;
+    }
+
+    .hero-h1 em {
+      font-style: normal;
+      background: linear-gradient(130deg, #30d158 0%, #6eb5ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      padding-right: 0.05em;
+      /* Prevent clipping in Chrome */
+      margin-right: -0.05em;
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--text2);
+      max-width: 460px;
+      font-weight: 400;
+      margin-bottom: 36px;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .btn-dl {
+      padding: 12px 24px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 500;
+      font-size: 13.5px;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: opacity .18s, transform .15s;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(10, 132, 255, 0.32);
+      letter-spacing: -0.1px;
+    }
+
+    .btn-dl:hover {
+      opacity: .88;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(10, 132, 255, 0.45);
+    }
+
+    .btn-dl {
+      animation: dl-pulse 4s infinite ease-in-out;
+    }
+
+    @keyframes dl-pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 4px 20px rgba(10, 132, 255, 0.32);
+      }
+
+      50% {
+        box-shadow: 0 8px 35px rgba(10, 132, 255, 0.55);
+      }
+    }
+
+    .btn-sec {
+      padding: 12px 22px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text);
+      font-size: 13.5px;
+      font-weight: 400;
+      border: 1px solid var(--border2);
+      border-radius: 100px;
+      cursor: pointer;
+      transition: background .18s, transform .15s;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      letter-spacing: -0.1px;
+    }
+
+    .btn-sec:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px)
+    }
+
+    .hero-pulse-curve {
+      position: absolute;
+      top: 520px;
+      /* Positioned globally within #hero beneath the text block */
+      left: 0;
+      width: 100vw;
+      opacity: 0.7;
+      filter: drop-shadow(0 0 12px rgba(48, 209, 88, 0.4));
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      z-index: 1;
+    }
+
+    .hero-pulse-curve path {
+      stroke-dasharray: 200;
+      stroke-dashoffset: 0;
+      animation: wave-dash 5s linear infinite;
+    }
+
+    @keyframes wave-dash {
+      0% {
+        stroke-dashoffset: 400;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    /* ─── macOS DESKTOP SIMULATION ─── */
+    .desktop-sim {
+      width: 100%;
+      position: relative;
+      z-index: 2;
+      overflow: visible;
+    }
+
+    /* ─── MacBook Frame ─── */
+    .macbook-frame {
+      width: min(1100px, 96vw);
+      margin: 0 auto;
+      position: relative;
+      perspective: 1600px;
+      /* Enable 3D depth */
+      z-index: 2;
+    }
+
+    .macbook-screen {
+      position: relative;
+      background: #0a0a0a;
+      border-radius: 16px 16px 0 0;
+      padding: 18px 18px 0 18px;
+      box-shadow:
+        0 0 0 2px #1a1a1a,
+        0 0 0 3px #333,
+        0 40px 120px rgba(0, 0, 0, 0.9),
+        0 0 80px rgba(10, 132, 255, 0.08);
+
+      /* Lid opening animation setup */
+      transform-origin: bottom center;
+      transform: rotateX(80deg);
+      opacity: 0.8;
+      transition: opacity 0.4s ease;
+      /* Initial mount fade */
+      will-change: transform, opacity;
+    }
+
+    .macbook-screen::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(125deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.05) 60%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+      border-radius: 12px 12px 0 0;
+      z-index: 100;
+      opacity: var(--lid-glare, 0);
+      transition: opacity 0.1s linear;
+    }
+
+    /* Camera notch */
+    .macbook-camera {
+      position: absolute;
+      top: 7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #1c1c1e;
+      border: 1px solid #2a2a2a;
+      z-index: 10;
+    }
+
+    .macbook-camera::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2.5px;
+      height: 2.5px;
+      border-radius: 50%;
+      background: rgba(30, 70, 120, 0.35);
+    }
+
+    .desktop-scene {
+      width: 100%;
+      position: relative;
+      border-radius: 8px 8px 0 0;
+      overflow: visible;
+    }
+
+    /* MacBook hinge / chin */
+    .macbook-hinge {
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(to bottom, #252525 0%, #1a1a1a 40%, #222 100%);
+      border-radius: 0 0 4px 4px;
+      position: relative;
+    }
+
+    .macbook-hinge::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent 10%, rgba(255, 255, 255, 0.08) 30%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.08) 70%, transparent 90%);
+    }
+
+    /* MacBook base */
+    .macbook-base {
+      width: 115%;
+      margin-left: -7.5%;
+      height: 14px;
+      background: linear-gradient(to bottom, #2a2a2c 0%, #1e1e20 60%, #18181a 100%);
+      border-radius: 0 0 12px 12px;
+      position: relative;
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.5),
+        0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    }
+
+    /* Keyboard light spill / Glow */
+    .macbook-base::before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 10%;
+      right: 10%;
+      height: 40px;
+      background: radial-gradient(ellipse at top, rgba(10, 132, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+      opacity: var(--base-glow, 0);
+      filter: blur(10px);
+      transition: opacity 0.1s linear;
+    }
+
+    /* Trackpad indent hint */
+    .macbook-base::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 18%;
+      height: 3px;
+      border-radius: 0 0 4px 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* Bottom edge shine */
+    .macbook-base::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 5%;
+      right: 5%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.06), transparent);
+    }
+
+    /* The macOS wallpaper background */
+    .desktop-wallpaper {
+      width: 100%;
+      height: 620px;
+      background-image: url('/Users/shreyan/.gemini/antigravity/brain/d2329c9a-d038-4c29-93ab-1296b1e389a0/macos_elegant_wallpaper_1776434945036.png');
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      overflow: visible;
+    }
+
+    /* Subtle aurora glow */
+    .desktop-wallpaper::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 40% at 25% 30%, rgba(10, 132, 255, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 70% 60%, rgba(48, 209, 88, 0.04) 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    /* ─── macOS MENU BAR ─── */
+    .macos-menubar {
+      height: var(--menu-bar-h);
+      background: rgba(20, 20, 20, 0.92);
+      backdrop-filter: saturate(180%) blur(30px);
+      -webkit-backdrop-filter: saturate(180%) blur(30px);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      position: relative;
+      z-index: 50;
+      user-select: none;
+    }
+
+    .mb-left {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .mb-apple {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.8);
+      padding: 0 10px;
+      height: var(--menu-bar-h);
+      display: flex;
+      align-items: center;
+      cursor: default;
+      border-radius: 4px;
+      transition: background .12s;
+    }
+
+    .mb-apple:hover {
+      background: rgba(255, 255, 255, 0.08)
+    }
+
+    .mb-item {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.82);
+      padding: 0 9px;
+      height: var(--menu-bar-h);
+      display: flex;
+      align-items: center;
+      cursor: default;
+      border-radius: 4px;
+      transition: background .12s;
+      letter-spacing: -0.1px;
+    }
+
+    .mb-item:hover {
+      background: rgba(255, 255, 255, 0.08)
+    }
+
+    .mb-item.app-name {
+      font-weight: 600
+    }
+
+    .mb-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .mb-sys {
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.75);
+      padding: 0 8px;
+      height: var(--menu-bar-h);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: default;
+      border-radius: 4px;
+      transition: background .12s;
+      letter-spacing: -0.1px;
+    }
+
+    .mb-sys:hover {
+      background: rgba(255, 255, 255, 0.08)
+    }
+
+    .mb-sys svg {
+      opacity: .75
+    }
+
+    #mb-clock-display {
+      font-family: 'Inter', -apple-system, monospace;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: -0.1px;
+    }
+
+    /* SpotDock Icon in menu bar - THE clickable one */
+    .mb-spotdock-btn {
+      padding: 0 8px;
+      height: var(--menu-bar-h);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background .12s;
+      position: relative;
+    }
+
+    .mb-spotdock-btn:hover {
+      background: rgba(255, 255, 255, 0.08)
+    }
+
+    .mb-spotdock-btn>svg {
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .mb-spotdock-btn.active {
+      background: rgba(255, 255, 255, 0.12)
+    }
+
+    /* ─── SPOTDOCK NATIVE PLAYER REPLICA ─── */
+    .sd-player {
+      width: 440px;
+      height: 250px;
+      border-radius: 28px;
+      overflow: hidden;
+      position: relative;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      background: rgba(30, 30, 30, 0.95);
+      color: white;
+      pointer-events: auto;
+    }
+
+    .sd-theme-classic .sd-classic-layout {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+
+    .sd-theme-classic .sd-minimal-layout,
+    .sd-theme-classic .sd-fanfav-layout {
+      display: none;
+    }
+
+    .sd-classic-art {
+      width: 45%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      border-radius: 28px 0 0 28px;
+      background-color: rgba(255, 255, 255, 0.05);
+      flex-shrink: 0;
+    }
+
+    .sd-classic-content {
+      flex: 1;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+
+    .sd-classic-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .sd-classic-track {
+      font-size: 18px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-top: 6px;
+      flex: 1;
+    }
+
+    .sd-classic-artist {
+      font-size: 14px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.65);
+      margin-top: 4px;
+    }
+
+    .sd-classic-lyrics-btn {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 18px;
+      cursor: pointer;
+      padding-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .sd-classic-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: auto;
+      margin-bottom: 12px;
+    }
+
+    .sd-classic-time {
+      font-size: 11px;
+      font-weight: 500;
+      font-family: monospace;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .sd-classic-bar {
+      flex: 1;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .sd-classic-fill {
+      height: 100%;
+      background: rgba(255, 255, 255, 0.7);
+      width: 0%;
+      border-radius: 2px;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .sd-classic-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding-bottom: 10px;
+    }
+
+    .sd-classic-btn {
+      font-size: 18px;
+      cursor: pointer;
+      color: white;
+      opacity: .8;
+    }
+
+    .sd-classic-play {
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* MINIMAL THEME */
+    .sd-theme-minimal .sd-minimal-layout {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      padding: 24px;
+      gap: 20px;
+      box-sizing: border-box;
+    }
+
+    .sd-theme-minimal .sd-classic-layout,
+    .sd-theme-minimal .sd-fanfav-layout {
+      display: none;
+    }
+
+    .sd-minimal-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sd-minimal-art {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      background-size: cover;
+      background-position: center;
+      margin-bottom: 12px;
+    }
+
+    .sd-m-artist {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 4px;
+    }
+
+    .sd-m-track {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sd-minimal-progress {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .sd-minimal-bar {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+      position: relative;
+      width: 100%;
+    }
+
+    .sd-minimal-fill {
+      height: 100%;
+      background: white;
+      width: 0%;
+      border-radius: 2px;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .sd-minimal-times {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: monospace;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .sd-minimal-right {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sd-minimal-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .sd-minimal-btn {
+      width: 56px;
+      height: 56px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+    }
+
+    .sd-minimal-play {
+      font-size: 24px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    /* FAN FAV THEME */
+    .sd-theme-fanfav {
+      background: linear-gradient(to bottom right, #1f242e, #141a24);
+    }
+
+    .sd-theme-fanfav .sd-fanfav-layout {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    .sd-theme-fanfav .sd-classic-layout,
+    .sd-theme-fanfav .sd-minimal-layout {
+      display: none;
+    }
+
+    .sd-fanfav-top {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 140px;
+      padding: 0 40px;
+    }
+
+    .sd-fanfav-timer {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-bottom: 12px;
+      width: 60px;
+    }
+
+    .sd-fanfav-tc {
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+      font-family: monospace;
+    }
+
+    .sd-fanfav-tr {
+      font-size: 9px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.4);
+      font-family: monospace;
+    }
+
+    .sd-fanfav-lyrics {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .sd-fanfav-controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: auto;
+      padding-bottom: 16px;
+    }
+
+    .sd-fanfav-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+    }
+
+    .sd-fanfav-play {
+      font-size: 18px;
+    }
+
+    .sd-fanfav-info {
+      text-align: center;
+      padding-bottom: 20px;
+    }
+
+    .sd-fanfav-track {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .sd-fanfav-artist {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .sd-vinyl-wrapper {
+      position: relative;
+      width: 135px;
+      height: 135px;
+      margin-bottom: -10px;
+    }
+
+    .sd-vinyl-disc {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle, #1a1a1a 0%, #0d0d0d 100%);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: sd-spin 5s linear infinite;
+    }
+
+    @keyframes sd-spin {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .sd-vinyl-disc::after {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      border: 0.5px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sd-vinyl-disc::before {
+      content: '';
+      position: absolute;
+      inset: 16px;
+      border-radius: 50%;
+      border: 0.5px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sd-vinyl-center {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background-size: cover;
+      border: 3px solid #1a1a1a;
+      position: relative;
+      z-index: 2;
+    }
+
+    .sd-vinyl-hole {
+      width: 4px;
+      height: 4px;
+      background: #080808;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+    }
+
+    .sd-tonearm {
+      position: absolute;
+      top: -10px;
+      right: -20px;
+      width: 85px;
+      height: 85px;
+      pointer-events: none;
+      transform-origin: top right;
+      transition: transform 0.3s;
+      transform: rotate(110deg);
+    }
+
+    .sd-tonearm.playing {
+      transform: rotate(155deg);
+    }
+
+    .sd-tonearm-pivot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #333;
+      position: absolute;
+      top: 0;
+      right: 0;
+      transform: translate(50%, -50%);
+      z-index: 2;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .sd-tonearm-shaft {
+      width: 4px;
+      height: 85px;
+      background: linear-gradient(90deg, #555, #888, #555);
+      position: absolute;
+      top: 0;
+      right: 0;
+      box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      transform-origin: top right;
+      border-radius: 2px;
+    }
+
+    .sd-tonearm-head {
+      width: 8px;
+      height: 12px;
+      background: #222;
+      border-radius: 2px;
+      position: absolute;
+      bottom: -12px;
+      right: -2px;
+    }
+
+    /* ─── MENU BAR POPUP ─── */
+    .mb-popup {
+      position: absolute;
+      top: calc(var(--menu-bar-h) + 8px);
+      left: 0;
+      transform-origin: top left;
+      transform: scale(0.92) translateY(-8px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+      transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.16s ease;
+    }
+
+    .mb-popup.open {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* When popup is inside mb-right, anchor to right */
+    .mb-spotdock-btn .mb-popup {
+      left: auto;
+      right: 0;
+    }
+
+    .float-player {
+      position: absolute;
+      width: 320px;
+      height: 180px;
+      background: rgba(28, 28, 30, 0.45);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border-radius: 20px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+      border: 0.5px solid rgba(255, 255, 255, 0.08);
+      z-index: 100;
+      overflow: hidden;
+      opacity: 0;
+      /* Hidden by default for scroll story */
+      transform: translateY(30px) scale(0.95);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .float-player.story-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .mb-popup.open {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .mb-spotdock-btn.story-pulse>svg {
+      animation: icon-hint-pulse 1.8s infinite !important;
+      animation-play-state: running !important;
+    }
+
+    /* Selection Hints */
+    .mb-hint {
+      position: absolute;
+      top: 100%;
+      margin-top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      color: #fff;
+      text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      z-index: 1000;
+      text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mb-hint svg {
+      width: 14px;
+      height: 14px;
+      opacity: 0.9;
+      animation: hintBounce 2s infinite ease-in-out;
+    }
+
+    @keyframes hintBounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-3px);
+      }
+    }
+
+    .mb-hint.visible {
+      opacity: 1;
+    }
+
+    /* ─── FLOATING NAV PILL ─── */
+    .nav-pill {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      width: auto;
+      min-width: 480px;
+      height: 48px;
+      background: rgba(28, 28, 30, 0.65);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      padding: 0 8px 0 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+      pointer-events: none;
+    }
+
+    .nav-pill.is-active {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .np-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: 32px;
+      text-decoration: none;
+    }
+
+    .np-logo span {
+      font-weight: 700;
+      font-size: 15px;
+      color: white;
+      letter-spacing: -0.3px;
+    }
+
+    .np-links {
+      display: flex;
+      gap: 24px;
+      margin-right: 32px;
+    }
+
+    .np-link {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .np-link:hover {
+      color: white;
+    }
+
+    .np-download {
+      height: 32px;
+      padding: 0 16px;
+      background: var(--accent);
+      color: white;
+      border-radius: 16px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      transition: transform 0.2s, background 0.2s;
+      box-shadow: 0 4px 12px rgba(10, 132, 255, 0.2);
+    }
+
+    .np-download:hover {
+      transform: scale(1.05);
+      background: #35a2ff;
+      box-shadow: 0 6px 16px rgba(10, 132, 255, 0.35);
+    }
+
+    /* ─── BENTO SPOTLIGHT ─── */
+    .bento-card {
+      position: relative;
+      overflow: hidden;
+      --mouse-x: 50%;
+      --mouse-y: 50%;
+    }
+
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y),
+          rgba(255, 255, 255, 0.05),
+          transparent 40%);
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .bento-card:hover::before {
+      opacity: 1;
+    }
+
+    .bento-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      /* Border thickness */
+      background: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y),
+          rgba(255, 255, 255, 0.2),
+          transparent 40%);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      -webkit-mask-composite: xor;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .bento-card:hover::after {
+      opacity: 1;
+    }
+
+    /* ─── STAGGERED REVEALS ─── */
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .scroll-reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+
+    /* Custom Dropdown Panel */
+    .dropdown-panel {
+      background: rgba(30, 30, 30, 0.85);
+      backdrop-filter: saturate(180%) blur(40px);
+      -webkit-backdrop-filter: saturate(180%) blur(40px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dropdown-item {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+      padding: 6px 12px 6px 24px;
+      border-radius: 5px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.1s, color 0.1s;
+    }
+
+    .dropdown-item.selected::before {
+      content: '✓';
+      position: absolute;
+      left: 8px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .dropdown-item:hover {
+      background: rgba(10, 132, 255, 0.9);
+      color: white;
+    }
+
+    /* Image 2 style popup player */
+    .popup-v2 {
+      width: 158px;
+      background: linear-gradient(160deg, #12243a 0%, #0a1520 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 150, 255, 0.22);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+      overflow: hidden;
+      padding: 0 0 24px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      position: relative;
+    }
+
+    /* Full-bleed album art background at top */
+    .popup-v2-bg-art {
+      width: 100%;
+      height: 102px;
+      background-size: cover;
+      background-position: center top;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    /* Dark gradient overlay on the art for readability */
+    .popup-v2-bg-art::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 42px;
+      background: linear-gradient(to bottom, transparent, rgba(10, 18, 28, 0.95));
+      pointer-events: none;
+    }
+
+    /* Bottom controls area */
+    .popup-v2-bottom {
+      padding: 6px 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      background: linear-gradient(160deg, #0e1e32 0%, #0a1520 100%);
+    }
+
+    .popup-v2-track {
+      font-size: 9px;
+      font-weight: 700;
+      color: white;
+      text-align: center;
+      margin-bottom: 1px;
+      letter-spacing: -0.2px;
+      width: 100%;
+    }
+
+    .popup-v2-artist {
+      font-size: 7.5px;
+      color: rgba(255, 255, 255, 0.48);
+      text-align: center;
+      margin-bottom: 6px;
+      width: 100%;
+    }
+
+    .popup-v2-bar-wrap {
+      width: 100%;
+      margin-bottom: 2px;
+    }
+
+    .popup-v2-bar-track {
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .popup-v2-bar-fill {
+      height: 100%;
+      background: rgba(255, 255, 255, 0.55);
+      border-radius: 2px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    /* Time labels under bar */
+    .popup-v2-times {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 2px;
+      margin-bottom: 5px;
+    }
+
+    .popup-v2-time-label {
+      font-size: 6.5px;
+      color: rgba(255, 255, 255, 0.35);
+      font-family: monospace;
+    }
+
+    .popup-v2-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 0;
+      width: 100%;
+    }
+
+    .popup-v2-ctrl-btn {
+      color: rgba(255, 255, 255, 0.82);
+      cursor: pointer;
+      transition: color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+    }
+
+    .popup-v2-ctrl-btn:hover {
+      color: white;
+    }
+
+    .popup-v2-ctrl-btn svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    @keyframes icon-hint-pulse {
+      0% {
+        text-shadow: 0 0 0px rgba(255, 255, 255, 0);
+      }
+
+      50% {
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+      }
+
+      100% {
+        text-shadow: 0 0 0px rgba(255, 255, 255, 0);
+      }
+    }
+
+    .icon-hint-active {
+      animation: icon-hint-pulse 2s infinite;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      padding: 2px;
+    }
+
+    .popup-v2-play {
+      width: 26px;
+      height: 26px;
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: background 0.15s;
+      line-height: 0;
+    }
+
+    .popup-v2-play:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .popup-v2-play svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .popup-v2-shuffle {
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      transition: color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+    }
+
+    .popup-v2-shuffle:hover {
+      color: white;
+    }
+
+    .popup-v2-shuffle svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .popup-v2-repeat {
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      transition: color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+    }
+
+    .popup-v2-repeat:hover {
+      color: white;
+    }
+
+    .popup-v2-repeat svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .popup-v2-settings {
+      position: absolute;
+      bottom: 4px;
+      right: 6px;
+      color: rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: color 0.15s;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+    }
+
+    .popup-v2-settings:hover {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .popup-v2-settings svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Layout wrappers for mb-popup */
+    .mb-player-wrapper.sd-theme-classic .popup-classic {
+      display: flex;
+    }
+
+    .mb-player-wrapper.sd-theme-minimal .popup-minimal {
+      display: flex;
+    }
+
+    .mb-player-wrapper.sd-theme-fan-fav .popup-vinyl {
+      display: flex;
+    }
+
+    .popup-layout {
+      display: none;
+      flex-direction: column;
+    }
+
+    /* Menu Bar Popup THEME: MINIMAL */
+    .popup-minimal {
+      width: 290px;
+      background: #121212;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      transform-origin: top right;
+      transform: scale(0.65);
+      margin-left: auto;
+    }
+
+    .pm-top {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .pm-art {
+      width: 96px;
+      height: 96px;
+      border-radius: 12px;
+      background-size: cover;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
+    }
+
+    .pm-info-wave {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex: 1;
+    }
+
+    .pm-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 2px;
+    }
+
+    .pm-artist {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 8px;
+    }
+
+    .pm-wave {
+      height: 24px;
+      width: 100%;
+      mask-image: radial-gradient(ellipse at center, black 40%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 100%);
+    }
+
+    .pm-controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .pm-btn {
+      height: 42px;
+      flex: 1;
+      background: #2a2a2a;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .pm-btn:hover {
+      background: #3a3a3a;
+    }
+
+    .pm-btn.primary {
+      flex: 1.5;
+      background: #333;
+    }
+
+    .pm-btn.primary:hover {
+      background: #444;
+    }
+
+    .pm-settings {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      color: rgba(255, 255, 255, 0.4);
+      cursor: pointer;
+    }
+
+    /* Menu Bar Popup THEME: FAN FAV (Vinyl) */
+    .popup-vinyl {
+      width: 270px;
+      background: #0a0a0a;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      padding: 24px 20px 20px;
+      align-items: center;
+      position: relative;
+      transform-origin: top right;
+      transform: scale(0.55);
+      margin-left: auto;
+    }
+
+    .pv-settings {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      cursor: pointer;
+      background: #1a1a1a;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pv-disc {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #111, #222, #111, #1a1a1a, #111);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .pv-glow {
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      border-left: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .pv-center {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-size: cover;
+      border: 1.5px solid rgba(0, 0, 0, 0.5);
+    }
+
+    .pv-info {
+      text-align: center;
+      margin-bottom: 12px;
+      width: 100%;
+    }
+
+    .pv-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .pv-artist {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .pv-bar {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    .pv-bar-track {
+      height: 3px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+      position: relative;
+      pointer-events: none;
+    }
+
+    .pv-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #fff;
+      border-radius: 2px;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .pv-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      width: 100%;
+      padding: 0 4px;
+    }
+
+    .pv-ctrl {
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pv-ctrl:hover {
+      color: white;
+    }
+
+    .pv-ctrl.primary {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      color: white;
+    }
+
+    .pv-ctrl.primary:hover {
+      background: #2a2a2a;
+    }
+
+    .pv-recents {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .pv-recent-art {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background-size: cover;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      opacity: 0.4;
+      transition: opacity 0.2s;
+      cursor: pointer;
+    }
+
+    .pv-recent-art:hover,
+    .pv-recent-art.active {
+      opacity: 1;
+      outline: 1.5px solid white;
+      outline-offset: 1px;
+    }
+
+    /* hide default float player bounds */
+    #float-player {
+      position: absolute;
+      cursor: move;
+    }
+
+    /* ────────────────────────────────────────────────────────
+   THEME: CLASSIC
+   ──────────────────────────────────────────────────────── */
+    .classic-only,
+    .minimal-only,
+    .fan-fav-only {
+      display: none;
+    }
+
+    .theme-classic .classic-only {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+
+    .theme-minimal .minimal-only {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .theme-fan-fav .fan-fav-only {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+    }
+
+    .theme-classic .popup-inner {
+      padding: 0;
+      width: 264px;
+      height: 264px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .theme-classic .popup-art {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      transition: filter 0.3s;
+    }
+
+    .theme-classic .popup-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.4) 20%, rgba(0, 0, 0, 0.85) 50%, #000 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px;
+      opacity: 0;
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .theme-classic .popup-inner:hover .popup-overlay {
+      opacity: 1;
+    }
+
+    .theme-classic .popup-info {
+      margin-bottom: 12px;
+    }
+
+    .theme-classic .popup-track {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .theme-classic .popup-artist {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .theme-classic .popup-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 4px;
+    }
+
+    .theme-classic .popup-progress {
+      padding: 0 4px;
+    }
+
+    .theme-classic .popup-bar-track {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .theme-classic .popup-bar-fill {
+      background: var(--green);
+    }
+
+    .theme-classic .popup-times,
+    .theme-classic .popup-footer,
+    .theme-classic .popup-divider,
+    .theme-classic .popup-wave-canvas {
+      display: none;
+    }
+
+    /* ────────────────────────────────────────────────────────
+   THEME: MINIMAL
+   ──────────────────────────────────────────────────────── */
+    .theme-minimal .popup-inner {
+      padding: 16px;
+      width: 300px;
+    }
+
+    .theme-minimal .popup-top {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .theme-minimal .popup-art {
+      width: 100px;
+      height: 100px;
+      border-radius: 12px;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .theme-minimal .popup-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .theme-minimal .popup-track {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .theme-minimal .popup-artist {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .theme-minimal .popup-wave-canvas {
+      width: 100%;
+      height: 50px;
+      margin-top: 8px;
+    }
+
+    .theme-minimal .popup-controls {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .theme-minimal .popup-ctrl-btn {
+      height: 40px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .theme-minimal .popup-ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .theme-minimal .popup-progress,
+    .theme-minimal .popup-footer,
+    .theme-minimal .popup-divider {
+      display: none;
+    }
+
+    /* ────────────────────────────────────────────────────────
+   THEME: FAN FAV
+   ──────────────────────────────────────────────────────── */
+    .theme-fan-fav .popup-inner {
+      padding: 16px;
+      background: #2a2622;
+      color: #f2e9d9;
+      font-family: 'Courier New', Courier, monospace;
+      width: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .theme-fan-fav .popup-art-container {
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+
+    .theme-fan-fav .spinning-vinyl {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #111, #222, #111, #1a1a1a, #111);
+      position: relative;
+      animation: vinyl-spin 4s linear infinite;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .theme-fan-fav .spinning-vinyl::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: repeating-radial-gradient(circle at center, transparent 0, rgba(255, 255, 255, 0.03) 1px, transparent 2px, transparent 6px);
+    }
+
+    .theme-fan-fav .vinyl-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background-size: cover;
+      border: 1.5px solid rgba(0, 0, 0, 0.4);
+    }
+
+    .theme-fan-fav .popup-info {
+      text-align: center;
+    }
+
+    .theme-fan-fav .popup-track {
+      font-size: 14px;
+      font-weight: bold;
+      color: #f2e9d9;
+    }
+
+    .theme-fan-fav .popup-artist {
+      font-size: 12px;
+      color: rgba(242, 233, 217, 0.6);
+    }
+
+    .theme-fan-fav .popup-progress {
+      width: 100%;
+    }
+
+    .theme-fan-fav .popup-bar-track {
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .theme-fan-fav .popup-bar-fill {
+      background: #f2e9d9;
+      opacity: 0.8;
+    }
+
+    .theme-fan-fav .popup-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .theme-fan-fav .popup-ctrl-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f2e9d9;
+    }
+
+    .theme-fan-fav .popup-recents {
+      width: 100%;
+      overflow-x: auto;
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .theme-fan-fav .popup-recents::-webkit-scrollbar {
+      height: 2px;
+    }
+
+    .theme-fan-fav .recent-art {
+      width: 52px;
+      height: 52px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @keyframes vinyl-spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ─── FLOATING MINI PLAYER WINDOW ─── */
+    .float-player {
+      position: absolute;
+      width: 295px;
+      height: 143px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 2px 0 0 rgba(255, 255, 255, 0.05) inset,
+        0 16px 40px rgba(0, 0, 0, 0.7),
+        0 4px 12px rgba(0, 0, 0, 0.4);
+      cursor: default;
+      user-select: none;
+      transition: box-shadow .2s;
+      z-index: 40;
+    }
+
+    .fp-titlebar {
+      display: none;
+    }
+
+    .fp-body {
+      display: flex;
+      height: 143px;
+      background: rgba(22, 22, 26, 0.98);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      transition: background 0.3s;
+    }
+
+    .float-player .fp-body {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .float-player .fp-layout {
+      display: none;
+    }
+
+    .fp-art-panel {
+      width: 147.5px;
+      height: 143px;
+      flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
+      background-color: rgba(10, 132, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .fp-right-panel {
+      flex: 1;
+      background: #1e1e22;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 10px 12px 8px;
+    }
+
+    .fp-top-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+
+    .fp-song-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    .fp-note-icon {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
+    .fp-artist-name {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.55);
+      margin-bottom: 6px;
+    }
+
+    .fp-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .fp-time {
+      font-size: 9.5px;
+      color: rgba(255, 255, 255, 0.45);
+      font-family: monospace;
+      flex-shrink: 0;
+    }
+
+    .fp-bar-track {
+      flex: 1;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .fp-bar-fill {
+      height: 100%;
+      background: rgba(255, 255, 255, 0.65);
+      border-radius: 2px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0%;
+    }
+
+    .fp-controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .fp-ctrl-btn {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .fp-ctrl-play {
+      width: 30px;
+      height: 30px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* Float Player THEME: CLASSIC */
+    .float-player.theme-classic {
+      width: 295px;
+      height: 143px;
+      background: #1c2a38;
+    }
+
+    .float-player.theme-classic .fp-classic {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Float Player THEME: MINIMAL */
+    .float-player.theme-minimal {
+      width: 340px;
+      height: 160px;
+      background: #262626;
+      border-radius: 20px;
+    }
+
+    .float-player.theme-minimal .fp-minimal {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .fp-minimal {
+      padding: 20px;
+      box-sizing: border-box;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .fp-m-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .fp-m-art {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      background-size: cover;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .fp-m-artist {
+      font-size: 11px;
+      font-weight: 500;
+      color: #a0a0a0;
+      margin-bottom: 2px;
+    }
+
+    .fp-m-track {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fp-m-progress {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .fp-m-bar-track {
+      height: 4px;
+      background: #444;
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .fp-m-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #fff;
+      border-radius: 2px;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .fp-m-times {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #888;
+      font-weight: 600;
+      font-family: monospace;
+    }
+
+    .fp-m-right {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-left: 24px;
+      flex-shrink: 0;
+    }
+
+    .fp-m-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #383838;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .fp-m-btn:hover {
+      background: #484848;
+    }
+
+    .fp-m-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* Float Player THEME: FAN FAV (Vinyl) */
+    .float-player.theme-fan-fav {
+      width: 340px;
+      height: 180px;
+      background: #13141a;
+      border-radius: 24px;
+    }
+
+    .float-player.theme-fan-fav .fp-vinyl {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .fp-vinyl {
+      flex-direction: column;
+      box-sizing: border-box;
+      padding: 16px 20px;
+      position: relative;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .fp-v-top {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      align-items: flex-start;
+      z-index: 5;
+    }
+
+    .fp-v-times {
+      display: flex;
+      flex-direction: column;
+      font-weight: bold;
+      font-family: monospace;
+      gap: 4px;
+    }
+
+    .fp-v-music-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+    }
+
+    .fp-v-music-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .fp-v-disc-wrap {
+      position: absolute;
+      top: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 106px;
+      height: 106px;
+      pointer-events: none;
+    }
+
+    .fp-v-disc {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #111, #222, #111, #1a1a1a, #111);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .fp-v-center {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-size: cover;
+      border: 1.5px solid rgba(0, 0, 0, 0.5);
+    }
+
+    .fp-v-controls {
+      display: flex;
+      gap: 16px;
+      margin-top: 24px;
+      z-index: 10;
+    }
+
+    .fp-v-ctrl {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .fp-v-ctrl:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .fp-v-info {
+      text-align: center;
+      margin-top: auto;
+      z-index: 10;
+    }
+
+    .fp-v-track {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .fp-v-artist {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* ────────────────────────────────────────────────────────
+   SCROLLBAR & UTILS
+   ──────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 4px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px
+    }
+
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    .scroll-reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .bento-grid> :nth-child(1) {
+      transition-delay: 0s;
+    }
+
+    .bento-grid> :nth-child(2) {
+      transition-delay: 0.1s;
+    }
+
+    .bento-grid> :nth-child(3) {
+      transition-delay: 0.2s;
+    }
+
+    .bento-grid> :nth-child(4) {
+      transition-delay: 0.3s;
+    }
+
+    .bento-grid> :nth-child(5) {
+      transition-delay: 0.4s;
+    }
+
+    .layouts-grid> :nth-child(1) {
+      transition-delay: 0s;
+    }
+
+    .layouts-grid> :nth-child(2) {
+      transition-delay: 0.1s;
+    }
+
+    .layouts-grid> :nth-child(3) {
+      transition-delay: 0.2s;
+    }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      animation: fadeUp .65s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .mb-spotdock-btn {
+      animation: hint-pulse 3s ease-in-out 2s 3;
+    }
+
+    @keyframes hint-pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(10, 132, 255, 0);
+      }
+
+      50% {
+        box-shadow: 0 0 0 6px rgba(10, 132, 255, 0.15);
+      }
+    }
+
+    @media(max-width:900px) {
+      nav {
+        padding: 0 20px
+      }
+
+      .nav-links {
+        display: none
+      }
+
+      .hero-text-area {
+        padding: 48px 24px 40px
+      }
+
+      .bento-grid {
+        grid-template-columns: 1fr
+      }
+
+      .bento-card.wide {
+        grid-column: span 1
+      }
+
+      .layouts-grid {
+        grid-template-columns: 1fr
+      }
+
+      .section {
+        padding: 64px 24px
+      }
+
+      footer {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center
+      }
+
+      .macbook-frame {
+        display: none
+      }
+    }
+
+    /* ─── DESKTOP DOCK ─── */
+    .desktop-dock {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      padding: 8px 16px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04) inset, 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .dock-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      transition: transform .15s;
+      cursor: pointer;
+    }
+
+    .dock-icon:hover {
+      transform: translateY(-8px) scale(1.1)
+    }
+
+    .dock-sep {
+      width: 1px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.12);
+      align-self: center;
+      margin: 0 4px;
+    }
+
+    .di-spotify {
+      background: linear-gradient(135deg, #1ed760, #15a04a);
+    }
+
+    .di-music {
+      background: linear-gradient(135deg, #fc3c44, #bf1e26);
+    }
+
+    .di-finder {
+      background: linear-gradient(135deg, #2396f3, #1058a6);
+    }
+
+    .di-safari {
+      background: linear-gradient(135deg, #00a2ff, #007acc);
+    }
+
+    .di-aria {
+      background: linear-gradient(135deg, #0a84ff, #0060cc);
+    }
+
+    /* ─── SECTION STYLES ─── */
+    .section {
+      padding: 100px 48px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .section-h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.06;
+      margin-bottom: 12px;
+    }
+
+    .section-desc {
+      font-size: 1rem;
+      color: var(--text2);
+      font-weight: 400;
+      line-height: 1.65;
+      max-width: 500px;
+    }
+
+    /* ─── FEATURES BENTO ─── */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 48px;
+    }
+
+    .bento-card {
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      padding: 24px 22px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .25s, transform .25s;
+    }
+
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .bento-card:hover {
+      border-color: rgba(10, 132, 255, 0.2);
+      transform: translateY(-3px)
+    }
+
+    .bento-card.wide {
+      grid-column: span 2
+    }
+
+    .bento-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(10, 132, 255, 0.1);
+      border: 1px solid rgba(10, 132, 255, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      color: var(--accent);
+      font-size: 18px;
+    }
+
+    .bento-icon.green {
+      background: rgba(48, 209, 88, 0.1);
+      border-color: rgba(48, 209, 88, 0.2);
+      color: var(--green)
+    }
+
+    .bento-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: -0.2px
+    }
+
+    .bento-desc {
+      font-size: 12.5px;
+      color: var(--text2);
+      line-height: 1.58;
+      letter-spacing: -0.1px;
+    }
+
+    .wave-canvas-container {
+      width: 100%;
+      height: 80px;
+      margin-top: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #live-wave-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ─── LAYOUTS SECTION ─── */
+    .layouts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 48px;
+    }
+
+    .layout-card {
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border);
+      padding: 22px;
+      transition: border-color .25s, transform .25s;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .layout-card:hover {
+      border-color: rgba(10, 132, 255, 0.2);
+      transform: translateY(-3px)
+    }
+
+    .lc-tag {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .lc-name {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .lc-desc {
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.55;
+      letter-spacing: -0.1px;
+    }
+
+    .lc-preview {
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 12px;
+      margin-top: auto;
+    }
+
+    .lc-preview-classic {
+      height: 94px;
+      display: flex;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #1c1c1e;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .lc-pc-art {
+      width: 45%;
+      height: 100%;
+      background: #444;
+      position: relative;
+    }
+
+    .lc-pc-art::after {
+      content: '♪';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(255, 255, 255, 0.2);
+      font-size: 24px;
+    }
+
+    .lc-pc-content {
+      flex: 1;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .lc-pc-line {
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      width: 100%;
+    }
+
+    .lc-pc-line.short {
+      width: 60%;
+    }
+
+    .lc-pc-controls {
+      margin-top: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.5;
+    }
+
+    .lc-preview-minimal {
+      display: flex;
+      gap: 10px;
+      padding: 8px 10px;
+      background: #1c1c1e;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      align-items: center;
+      height: 94px;
+    }
+
+    .lc-pm-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .lc-pm-art {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #333;
+      margin-bottom: 2px;
+      overflow: hidden;
+    }
+
+    .lc-pm-artist {
+      font-size: 9px;
+      color: #888;
+      font-weight: 500;
+    }
+
+    .lc-pm-track {
+      font-size: 11px;
+      color: #fff;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .lc-pm-progress {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .lc-pm-bar {
+      height: 3px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+      position: relative;
+    }
+
+    .lc-pm-fill {
+      height: 100%;
+      background: #fff;
+      border-radius: 2px;
+      width: 80%;
+    }
+
+    .lc-pm-times {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      color: #616161;
+      font-family: monospace;
+    }
+
+    .lc-pm-right {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .lc-pm-btn {
+      width: 28px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #aaa;
+    }
+
+    .lc-pm-btn.active {
+      color: #fff;
+    }
+
+
+    .lyrics-section {
+      background: var(--bg2);
+      padding: 100px 48px;
+      border-top: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .lyrics-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .lyrics-content {
+      flex: 1.2;
+    }
+
+    .lyrics-content .section-label {
+      font-size: 10px;
+    }
+
+    .lyrics-content .section-h2 {
+      font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+    }
+
+    .lyrics-content .section-desc {
+      font-size: 0.89rem;
+    }
+
+    .lyrics-visual {
+      flex: 1;
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+
+    .lyrics-preview-box {
+      width: 100%;
+      max-width: 426px;
+      min-height: 224px;
+      /* Stable height to prevent content below from jumping */
+      background: rgba(28, 28, 30, 0.4);
+      border-radius: 28px;
+      padding: 19px 27px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      position: relative;
+    }
+
+    .l-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      position: relative;
+    }
+
+    .l-art-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .l-art {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      background: #000;
+    }
+
+    .l-info {
+      min-width: 0;
+    }
+
+    .l-track {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+      letter-spacing: -0.01em;
+    }
+
+    .l-artist {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .l-icon {
+      color: #30d158;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.9;
+    }
+
+    .l-line {
+      font-size: 16.5px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.2);
+      margin-bottom: 10px;
+      transition: all 0.4s ease;
+      text-align: left;
+      padding-left: 8px;
+    }
+
+    .l-line.active {
+      color: #fff;
+      font-size: 20.5px;
+      font-weight: 700;
+      opacity: 1;
+      margin: 12px 0;
+      padding-left: 0;
+    }
+
+    @media(max-width:900px) {
+      .lyrics-container {
+        flex-direction: column;
+        gap: 40px;
+        text-align: center;
+      }
+    }
+
+    /* ─── DOWNLOAD CTA ─── */
+    #cta {
+      text-align: center;
+      padding: 81px 38px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #cta::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 420px;
+      height: 210px;
+      background: radial-gradient(ellipse, rgba(10, 132, 255, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-h2 {
+      font-size: clamp(1.7rem, 3.8vw, 2.9rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cta-h2 em {
+      font-style: normal;
+      background: linear-gradient(120deg, #6eb5ff, #0a84ff, #30d158);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cta-sub {
+      font-size: 0.89rem;
+      color: var(--text2);
+      font-weight: 400;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 2;
+      letter-spacing: -0.1px;
+    }
+
+    .cta-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn-big {
+      padding: 11.5px 23px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 500;
+      font-size: 12.6px;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity .18s, transform .15s;
+      box-shadow: 0 4px 24px rgba(10, 132, 255, 0.35);
+      letter-spacing: -0.1px;
+    }
+
+    .btn-big:hover {
+      opacity: .88;
+      transform: translateY(-2px)
+    }
+
+    .cta-note {
+      font-size: 9.5px;
+      color: var(--text3);
+      margin-top: 14px;
+      position: relative;
+      z-index: 2;
+      letter-spacing: -0.1px;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text2);
+      font-size: 12.5px;
+    }
+
+    .footer-logo {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 13.5px;
+      letter-spacing: -0.2px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-links a {
+      color: var(--text2);
+      text-decoration: none;
+      transition: color .18s;
+      letter-spacing: -0.1px;
+    }
+
+    .footer-links a:hover {
+      color: var(--text)
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar {
+      width: 4px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px
+    }
+
+    /* ─── FADE-IN ANIMATIONS ─── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      animation: fadeUp .65s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .fade-up:nth-child(1) {
+      animation-delay: .04s
+    }
+
+    .fade-up:nth-child(2) {
+      animation-delay: .12s
+    }
+
+    .fade-up:nth-child(3) {
+      animation-delay: .2s
+    }
+
+    /* Paused state for vinyl */
+    .vinyl-paused .fp-vinyl,
+    .vinyl-paused .popup-art-vinyl-ring {
+      animation-play-state: paused;
+    }
+
+    /* Highlight pulse for interactive hints */
+    @keyframes icon-hint-pulse {
+
+      0%,
+      100% {
+        color: rgba(255, 255, 255, 0.82);
+        filter: drop-shadow(0 0 0 rgba(191, 90, 242, 0));
+      }
+
+      50% {
+        color: #f8c8ff;
+        filter: drop-shadow(0 0 6px rgba(191, 90, 242, 0.9));
+      }
+    }
+
+    .mb-spotdock-btn>svg {
+      animation: icon-hint-pulse 3s infinite ease-in-out;
+      animation-play-state: paused;
+    }
+
+    .macbook-screen.lid-fully-open .mb-spotdock-btn>svg {
+      animation-play-state: running;
+    }
+
+    .mb-spotdock-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+    }
+
+    #mb-theme-btn {
+      animation: icon-hint-pulse 3s infinite ease-in-out;
+      animation-play-state: paused;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .macbook-screen.lid-fully-open #mb-theme-btn {
+      animation-play-state: running;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media(max-width:900px) {
+      nav {
+        padding: 0 20px
+      }
+
+      .nav-links {
+        display: none
+      }
+
+      .hero-text-area {
+        padding: 48px 24px 40px
+      }
+
+      .bento-grid {
+        grid-template-columns: 1fr
+      }
+
+      .bento-card.wide {
+        grid-column: span 1
+      }
+
+      .layouts-grid {
+        grid-template-columns: 1fr
+      }
+
+      .section {
+        padding: 64px 24px
+      }
+
+      footer {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center
+      }
+
+      .desktop-scene {
+        display: none
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ─── FLOATING NAV PILL ─── -->
+  <nav class="nav-pill" id="scroll-nav">
+    <a href="#" class="np-logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
+      </svg>
+      <span>SpotDock</span>
+    </a>
+    <div class="np-links">
+      <a href="#features" class="np-link">Features</a>
+      <a href="#layouts" class="np-link">Layouts</a>
+      <a href="#hero" class="np-link">Top</a>
+    </div>
+    <a href="#hero" class="np-download">Download</a>
+  </nav>
+
+  <!-- ─── NAV ─── -->
+  <nav id="main-nav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">♪</div>
+      SpotDock
+    </div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#layouts">Layouts</a></li>
+      <li><a href="#cta">Download</a></li>
+    </ul>
+    <a class="nav-cta" href="#cta">Download for Mac</a>
+  </nav>
+
+  <!-- ─── HERO ─── -->
+  <section id="hero">
+
+    <!-- Hero text -->
+    <div class="hero-text-area">
+
+      <h1 class="hero-h1 fade-up">
+        <em>Music.</em> Wherever you want it.
+      </h1>
+      <p class="hero-sub fade-up">
+        A floating player and menu bar companion with customizable layouts and built-in lyrics.
+      </p>
+      <div class="hero-btns fade-up">
+        <a class="btn-dl" href="#cta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 9h-4V3H9v6H5l7 7 7-7zm-6 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z" />
+          </svg>
+          Download for Mac
+        </a>
+        <a class="btn-sec" href="#features">See Features →</a>
+      </div>
+
+    </div>
+
+    <!-- Full-Width Green Curve Wavelength (Direct child for edge-to-edge) -->
+    <svg class="hero-pulse-curve" width="100%" height="60" viewBox="0 0 1200 60" preserveAspectRatio="none" fill="none">
+      <path d="M0,30 C150,30 200,5 300,5 C400,5 450,55 600,55 C750,55 800,5 900,5 C1000,5 1050,30 1200,30"
+        stroke="#30d158" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+
+    <div class="desktop-sim">
+      <div class="macbook-frame">
+        <div class="macbook-screen">
+          <div class="macbook-camera"></div>
+          <div class="desktop-scene" id="desktop-scene">
+
+            <!-- macOS Wallpaper -->
+            <div class="desktop-wallpaper" id="desktop-wallpaper">
+
+              <!-- macOS Menu Bar -->
+              <div class="macos-menubar">
+                <div class="mb-left">
+                  <div class="mb-apple">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="opacity:.8">
+                      <path
+                        d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                    </svg>
+                  </div>
+
+                  <div class="mb-item app-name">SpotDock</div>
+                  <div class="mb-item">File</div>
+                  <div class="mb-item">View</div>
+                  <div class="mb-item" id="mb-theme-btn" onclick="toggleThemeMenu(event)" style="position:relative;">
+                    Themes
+                    <div class="mb-hint" id="hint-themes">
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7 14l5-5 5 5H7z" />
+                      </svg>
+                      Try switching themes
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-right">
+                  <!-- THE INTERACTIVE STATUS ICON - left of WiFi -->
+                  <div class="mb-spotdock-btn" id="mb-spotdock-btn" onclick="toggleMenuPopup(event)"
+                    style="position:relative;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
+                    </svg>
+                    <div class="mb-hint" id="hint-spotdock">
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7 14l5-5 5 5H7z" />
+                      </svg>
+                      Open SpotDock menubar panel
+                    </div>
+
+                    <div class="mb-popup" id="mb-popup" style="left:auto;right:0;transform-origin:top right;">
+                      <div class="mb-player-wrapper">
+
+                        <!-- CLASSIC POPUP (v2) -->
+                        <div class="popup-layout popup-classic popup-v2">
+                          <div class="popup-v2-bg-art sd-popup-bg-art" id="popup-bg-art"
+                            style="background-image:url('https://i.scdn.co/image/ab67616d0000b2734718e2b124f79258be7bc452');">
+                          </div>
+                          <div class="popup-v2-bottom">
+                            <div class="popup-v2-track sd-track">Song Name</div>
+                            <div class="popup-v2-artist sd-artist">Artist</div>
+                            <div class="popup-v2-bar-wrap">
+                              <div class="popup-v2-bar-track" onclick="popupSeek(event)">
+                                <div class="popup-v2-bar-fill sd-fill"></div>
+                              </div>
+                            </div>
+                            <div class="popup-v2-times">
+                              <span class="popup-v2-time-label sd-time-curr">0:00</span>
+                              <span class="popup-v2-time-label sd-time-rem">-0:00</span>
+                            </div>
+                            <div class="popup-v2-controls">
+                              <div class="popup-v2-shuffle"><svg viewBox="0 0 24 24" fill="currentColor">
+                                  <path
+                                    d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
+                                </svg></div>
+                              <div class="popup-v2-ctrl-btn" onclick="prevTrack(event)"><svg viewBox="0 0 24 24"
+                                  fill="currentColor">
+                                  <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                                </svg></div>
+                              <div class="popup-v2-play sd-play" onclick="togglePlay(event)"><svg class="sd-play-icon"
+                                  viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M8 5v14l11-7z" />
+                                </svg></div>
+                              <div class="popup-v2-ctrl-btn" onclick="nextTrack(event)"><svg viewBox="0 0 24 24"
+                                  fill="currentColor">
+                                  <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                                </svg></div>
+                              <div class="popup-v2-repeat"><svg viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" />
+                                </svg></div>
+                            </div>
+                          </div>
+                          <div class="popup-v2-settings"><svg viewBox="0 0 24 24" fill="currentColor">
+                              <path
+                                d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
+                            </svg></div>
+                        </div>
+
+                        <!-- MINIMAL POPUP -->
+                        <div class="popup-layout popup-minimal">
+                          <div class="pm-settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                              <path
+                                d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
+                            </svg></div>
+                          <div class="pm-top">
+                            <div class="pm-art sd-minimal-art"></div>
+                            <div class="pm-info-wave">
+                              <div class="pm-title sd-track">Starboy</div>
+                              <div class="pm-artist sd-artist">The Weeknd</div>
+                              <canvas class="pm-wave wave-canvas" style="display:block;"></canvas>
+                            </div>
+                          </div>
+                          <div class="pm-controls">
+                            <div class="pm-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path
+                                  d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
+                              </svg></div>
+                            <div class="pm-btn" onclick="prevTrack(event)"><svg viewBox="0 0 24 24" width="24"
+                                height="24" fill="currentColor">
+                                <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                              </svg></div>
+                            <div class="pm-btn primary sd-play" onclick="togglePlay(event)"><svg class="sd-play-icon"
+                                viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                                <path d="M8 5v14l11-7z" />
+                              </svg></div>
+                            <div class="pm-btn" onclick="nextTrack(event)"><svg viewBox="0 0 24 24" width="24"
+                                height="24" fill="currentColor">
+                                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                              </svg></div>
+                            <div class="pm-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" />
+                              </svg></div>
+                          </div>
+                        </div>
+
+                        <!-- VINYL POPUP -->
+                        <div class="popup-layout popup-vinyl">
+                          <div class="pv-settings"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                              <path
+                                d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
+                            </svg></div>
+                          <div class="pv-disc sd-vinyl-disc">
+                            <div class="pv-glow"></div>
+                            <div class="pv-center sd-vinyl-center"></div>
+                          </div>
+                          <div class="pv-info">
+                            <div class="pv-title sd-track">Starboy</div>
+                            <div class="pv-artist sd-artist">The Weeknd</div>
+                          </div>
+                          <div class="pv-bar">
+                            <div class="pv-bar-track">
+                              <div class="pv-bar-fill sd-fill"></div>
+                            </div>
+                          </div>
+                          <div class="pv-controls">
+                            <div class="pv-ctrl"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                  d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
+                              </svg></div>
+                            <div class="pv-ctrl" onclick="prevTrack(event)"><svg width="24" height="24"
+                                viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                              </svg></div>
+                            <div class="pv-ctrl primary sd-play" onclick="togglePlay(event)"><svg class="sd-play-icon"
+                                width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z" />
+                              </svg></div>
+                            <div class="pv-ctrl" onclick="nextTrack(event)"><svg width="24" height="24"
+                                viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                              </svg></div>
+                            <div class="pv-ctrl"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" />
+                              </svg></div>
+                          </div>
+                          <div class="pv-recents">
+                            <div class="pv-recent-art active"
+                              style="background-image:url('https://i.scdn.co/image/ab67616d0000b2734718e2b124f79258be7bc452');">
+                            </div>
+                            <div class="pv-recent-art" style="background-image:url('nobody-knows-cover.png');"></div>
+                            <div class="pv-recent-art" style="background-image:url('losin-control.jpg');"></div>
+                            <div class="pv-recent-art" style="background-image:url('shawn-mendes.jpg');"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mb-sys"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M1.5 8.5a15.5 15.5 0 0 1 21 0l-2.12 2.12a12.5 12.5 0 0 0-16.76 0zm4.24 4.24a9 9 0 0 1 12.52 0l-2.12 2.12a6 6 0 0 0-8.28 0zm4.24 4.24a3 3 0 0 1 4.04 0L12 19.17l-2.02-2.19z" />
+                    </svg></div>
+                  <div class="mb-sys"><svg width="18" height="14" viewBox="0 0 28 14" fill="none" style="opacity:.75">
+                      <rect x="1" y="2" width="22" height="10" rx="2.5" stroke="white" stroke-width="1.2" fill="none"
+                        opacity=".7" />
+                      <rect x="2" y="3" width="16" height="8" rx="1.5" fill="white" opacity=".8" />
+                      <rect x="24" y="5" width="2.5" height="4" rx="1" fill="white" opacity=".5" />
+                    </svg></div>
+                  <div class="mb-sys"><span id="mb-clock-display">9:41 AM</span></div>
+                </div>
+              </div>
+
+              <!-- THEME SWITCHER MENU (Hidden) -->
+              <div id="theme-menu" class="mb-popup dropdown-panel"
+                style="right: auto; left: 160px; width: 140px; padding: 6px; gap: 2px;">
+                <div class="dropdown-item" data-theme="classic" onclick="setTheme('classic')">Classic</div>
+                <div class="dropdown-item" data-theme="minimal" onclick="setTheme('minimal')">Minimal</div>
+                <div class="dropdown-item" data-theme="fan-fav" onclick="setTheme('fan-fav')">Vinyl</div>
+              </div>
+
+              <!-- FLOATING MINI PLAYER -->
+              <div class="float-player theme-classic" id="float-player" style="top:0; left:0;">
+                <div class="fp-body">
+
+                  <!-- CLASSIC LAYOUT -->
+                  <div class="fp-layout fp-classic">
+                    <div class="fp-art-panel sd-classic-art"
+                      style="width:147.5px;height:143px;border-radius:0;flex-shrink:0;"></div>
+                    <div class="fp-right-panel">
+                      <div class="fp-top-row">
+                        <div class="fp-song-name sd-track">Song Name</div>
+                        <div class="fp-note-icon">♪</div>
+                      </div>
+                      <div class="fp-artist-name sd-artist">Artist</div>
+                      <div class="fp-progress-row">
+                        <span class="fp-time sd-time-curr">0:00</span>
+                        <div class="fp-bar-track" onclick="popupSeek(event)">
+                          <div class="fp-bar-fill sd-fill"></div>
+                        </div>
+                        <span class="fp-time sd-time-dur">0:00</span>
+                      </div>
+                      <div class="fp-controls-row">
+                        <div class="fp-ctrl-btn" onclick="prevTrack(event)">⏮</div>
+                        <div class="fp-ctrl-play sd-play" onclick="togglePlay(event)">⏸</div>
+                        <div class="fp-ctrl-btn" onclick="nextTrack(event)">⏭</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- MINIMAL LAYOUT -->
+                  <div class="fp-layout fp-minimal">
+                    <div class="fp-m-left">
+                      <div class="fp-m-art sd-classic-art"></div>
+                      <div class="fp-m-artist sd-artist">The Weeknd</div>
+                      <div class="fp-m-track sd-track">Starboy</div>
+                      <div class="fp-m-progress">
+                        <div class="fp-m-bar-track" onclick="popupSeek(event)">
+                          <div class="fp-m-bar-fill sd-fill"></div>
+                        </div>
+                        <div class="fp-m-times"><span class="sd-time-curr">00:31</span><span
+                            class="sd-time-dur">03:50</span></div>
+                      </div>
+                    </div>
+                    <div class="fp-m-right">
+                      <div class="fp-m-btn"><svg viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M4 10h12v2H4zm0-4h16v2H4zm0 8h10v2H4z"></path>
+                        </svg></div>
+                      <div class="fp-m-btn sd-play" onclick="togglePlay(event)"><svg class="sd-play-icon"
+                          viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg></div>
+                      <div class="fp-m-btn" onclick="prevTrack(event)"><svg viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                        </svg></div>
+                      <div class="fp-m-btn" onclick="nextTrack(event)"><svg viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                        </svg></div>
+                    </div>
+                  </div>
+
+                  <!-- VINYL / FAN-FAV LAYOUT -->
+                  <div class="fp-layout fp-vinyl">
+                    <div class="fp-v-top">
+                      <div class="fp-v-times">
+                        <div class="sd-time-curr" style="color:white; font-size:12px;">00:53</div>
+                        <div class="sd-time-rem" style="color:#777; font-size:10px;">-02:56</div>
+                      </div>
+                      <div class="fp-v-disc-wrap">
+                        <div class="fp-v-disc sd-vinyl-disc">
+                          <div class="fp-v-center sd-vinyl-center"></div>
+                        </div>
+                        <!-- Not adding tonearm to avoid extra complex animations unless there's an existing class, just keeping simple disc -->
+                      </div>
+                      <div class="fp-v-music-btn"><svg viewBox="0 0 24 24" fill="currentColor">
+                          <path
+                            d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                        </svg></div>
+                    </div>
+                    <div class="fp-v-controls">
+                      <div class="fp-v-ctrl" onclick="prevTrack(event)"><svg width="18" height="18" viewBox="0 0 24 24"
+                          fill="currentColor">
+                          <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                        </svg></div>
+                      <div class="fp-v-ctrl sd-play" onclick="togglePlay(event)"><svg class="sd-play-icon" width="20"
+                          height="20" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg></div>
+                      <div class="fp-v-ctrl" onclick="nextTrack(event)"><svg width="18" height="18" viewBox="0 0 24 24"
+                          fill="currentColor">
+                          <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                        </svg></div>
+                    </div>
+                    <div class="fp-v-info">
+                      <div class="fp-v-track sd-track">Starboy</div>
+                      <div class="fp-v-artist sd-artist">The Weeknd</div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Extraneous closing tags removed to correctly wrap dock -->
+
+              <!-- Dock (decorative) -->
+              <div class="desktop-dock">
+                <div class="dock-icon di-finder" title="Finder">
+                  <svg width="24" height="24" viewBox="0 0 48 48" fill="none">
+                    <rect width="48" height="48" rx="10" fill="url(#f1)" />
+                    <defs>
+                      <linearGradient id="f1" x1="0" y1="0" x2="48" y2="48">
+                        <stop stop-color="#2396f3" />
+                        <stop offset="1" stop-color="#1058a6" />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="19" cy="24" r="8" fill="white" opacity=".9" />
+                    <circle cx="29" cy="24" r="8" fill="white" opacity=".6" />
+                  </svg>
+                </div>
+                <div class="dock-sep"></div>
+                <div class="dock-icon di-spotify" title="Spotify">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="white">
+                    <path
+                      d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                  </svg>
+                </div>
+                <div class="dock-icon di-aria" title="SpotDock — Player">
+                  <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                  </svg>
+                </div>
+              </div>
+
+            </div><!-- /desktop-wallpaper -->
+          </div><!-- /desktop-scene -->
+        </div><!-- /macbook-screen -->
+        <div class="macbook-hinge"></div>
+        <div class="macbook-base"></div>
+      </div><!-- /macbook-frame -->
+    </div><!-- /desktop-sim -->
+
+  </section>
+
+  <!-- ─── FEATURES ─── -->
+  <section id="features" style="background:var(--bg2)">
+    <div class="section">
+      <h2 class="section-h2">Every detail,<br>intentional.</h2>
+      <p class="section-desc">Built pixel-by-pixel for macOS. Every interaction deliberate, every animation purposeful.
+      </p>
+
+      <div class="bento-grid">
+        <div class="bento-card wide scroll-reveal">
+          <div class="bento-icon">♪</div>
+          <div class="bento-title">Lyrics</div>
+          <div class="bento-desc">See every line in sync, across every layout.</div>
+          <div
+            style="margin-top:18px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);padding:14px;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.18);margin-bottom:8px;text-align:center">Come and go as
+              you please</div>
+            <div
+              style="font-size:14px;font-weight:600;text-align:center;color:rgba(255,255,255,0.95);margin-bottom:8px;">
+              Arenas packed out</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.18);text-align:center">Next line fades in smoothly</div>
+          </div>
+        </div>
+
+        <div class="bento-card scroll-reveal">
+          <div class="bento-icon green">〜</div>
+          <div class="bento-title">Live Waveform</div>
+          <div class="bento-desc">Animated audio visualizer synced to your music in real time.</div>
+          <div class="wave-canvas-container">
+            <canvas id="live-wave-canvas"></canvas>
+          </div>
+        </div>
+
+        <div class="bento-card scroll-reveal">
+          <div class="bento-icon green">🪟</div>
+          <div class="bento-title">Multiple layouts</div>
+          <div class="bento-desc">Switch between Classic, Minimal, and Vinyl to match your style.</div>
+        </div>
+
+        <div class="bento-card scroll-reveal">
+          <div class="bento-icon">⌨</div>
+          <div class="bento-title">Floating player</div>
+          <div class="bento-desc">Keep your music in view, wherever you place it.</div>
+          <div style="display:flex;gap:5px;margin-top:14px;flex-wrap:wrap;">
+            <span
+              style="font-family:monospace;font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);color:rgba(255,255,255,.55)">Space</span>
+            <span
+              style="font-family:monospace;font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);color:rgba(255,255,255,.55)">⌘
+              →</span>
+            <span
+              style="font-family:monospace;font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);color:rgba(255,255,255,.55)">⌘
+              L</span>
+          </div>
+        </div>
+
+        <div class="bento-card scroll-reveal">
+          <div class="bento-icon green">◎</div>
+          <div class="bento-title">Menu bar control</div>
+          <div class="bento-desc">Access and control your music without leaving your workflow.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── LAYOUTS ─── -->
+  <section id="layouts" style="background:var(--bg)">
+    <div class="section">
+      <div style="text-align:center;margin-bottom:0">
+        <h2 class="section-h2" style="text-align:center;margin-top:12px">Choose your style.</h2>
+        <p class="section-desc" style="margin:0 auto;text-align:center">Classic, Minimal, or Vinyl — each designed for a
+          different way to listen.</p>
+      </div>
+      <div class="layouts-grid">
+        <!-- CLASSIC -->
+        <div class="layout-card scroll-reveal" onclick="tryTheme('classic')" style="cursor: pointer;">
+          <div class="lc-tag">Classic</div>
+          <div class="lc-name">Classic Player</div>
+          <div class="lc-desc">A timeless, high-fidelity experience. Split-pane design featuring full-bleed artwork and
+            precise controls.</div>
+          <div class="lc-preview">
+            <div class="lc-preview-classic" style="height: 94px;">
+              <div class="lc-pc-art" style="background: rgba(255,255,255,0.06);"></div>
+              <div class="lc-pc-content">
+                <div class="lc-pc-line"></div>
+                <div class="lc-pc-line short"></div>
+                <div class="lc-pc-controls">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                  </svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                  </svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MINIMAL -->
+        <div class="layout-card scroll-reveal" onclick="tryTheme('minimal')" style="cursor: pointer;">
+          <div class="lc-tag">Minimal</div>
+          <div class="lc-name">Minimal Mode</div>
+          <div class="lc-desc">A balanced, information-rich companion. High-resolution art and typography on the left,
+            with intuitive touch-friendly controls on the right.</div>
+          <div class="lc-preview">
+            <div class="lc-preview-minimal" style="height: 94px;">
+              <div class="lc-pm-left" style="margin-top: 6px;">
+                <div class="lc-pm-art" style="background: rgba(255,255,255,0.06);"></div>
+                <div
+                  style="width: 45px; height: 8px; background: rgba(255,255,255,0.12); border-radius: 4px; margin-bottom: 6px;">
+                </div>
+                <div style="width: 95px; height: 12px; background: rgba(255,255,255,0.25); border-radius: 4px;">
+                </div>
+              </div>
+              <div class="lc-pm-right" style="margin-top: 6px;">
+                <div class="lc-pm-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 17h3l2-4V7H5v6h3zm10 0h3l2-4V7h-6v6h3z" />
+                  </svg></div>
+                <div class="lc-pm-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg></div>
+                <div class="lc-pm-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                  </svg></div>
+                <div class="lc-pm-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                  </svg></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VINYL -->
+        <div class="layout-card scroll-reveal" onclick="tryTheme('fan-fav')" style="cursor: pointer;">
+          <div class="lc-tag">Vinyl</div>
+          <div class="lc-name">Spinning Record</div>
+          <div class="lc-desc">Animated vinyl with time counter. A statement piece that turns your screen into a
+            turntable.</div>
+          <div class="lc-preview">
+            <div
+              style="display:flex;align-items:center;justify-content:center;height:94px;background:#1c1c1e;border-radius:12px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
+              <div
+                style="width:84px;height:84px;border-radius:50%;background:conic-gradient(from 0deg,#1a1a1a,#222,#141414,#1e1e1e,#121212,#1c1c1c);animation:vinyl-spin 5s linear infinite;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,0.07);box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                <div
+                  style="width:24px;height:24px;border-radius:50%;background:#0a0a0a;border:1.5px solid rgba(255,255,255,0.15)">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── LYRICS SECTION ─── -->
+  <section id="lyrics" class="lyrics-section">
+    <div class="lyrics-container">
+      <div class="lyrics-content">
+        <div class="section-label">Lyrics Mode</div>
+        <h2 class="section-h2">See every word,<br>as it plays.</h2>
+        <p class="section-desc">Classic, Minimal, or Vinyl — every mode supports lyrics view. Switch instantly with a
+          click and watch your player transform as the words follow the beat.</p>
+      </div>
+      <div class="lyrics-visual">
+        <div class="lyrics-preview-box">
+          <div class="l-header">
+            <div class="l-art-info">
+              <img class="l-art"
+                src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?auto=format&fit=crop&q=80&w=300&h=300"
+                alt="Track Art">
+              <div class="l-info">
+                <div class="l-track">Nightcall</div>
+                <div class="l-artist">Kavinsky</div>
+              </div>
+            </div>
+            <div class="l-icon" style="color:#ff2d55;">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                <path d="M4 10h12v2H4zm0-4h16v2H4zm0 8h10v2H4z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="l-line">I'm giving you a nightcall</div>
+          <div class="l-line active">To tell you how I feel</div>
+          <div class="l-line">I want to drive you through the night</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CTA ─── -->
+  <section id="cta">
+    <h2 class="cta-h2">Ready to upgrade how you listen?</h2>
+    <p class="cta-sub">Download SpotDock and keep your music exactly where you want it.</p>
+    <div class="cta-btns">
+      <button class="btn-big">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 9h-4V3H9v6H5l7 7 7-7zm-6 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z" />
+        </svg>
+        Download for Mac
+      </button>
+    </div>
+    <p class="cta-note">Requires macOS 13 Ventura or later · Apple Silicon & Intel</p>
+  </section>
+
+  <!-- ─── FOOTER ─── -->
+  <footer>
+    <div class="footer-links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Support</a>
+      <a href="#">Twitter</a>
+    </div>
+    <div class="footer-copyright">© 2026 SpotDock Music</div>
+  </footer>
+
+  <script>
+    // ─── Clock ───────────────────────────────────────────────
+    function updateClock() {
+      const now = new Date();
+      let h = now.getHours(), m = now.getMinutes();
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      document.getElementById('mb-clock-display').textContent = h + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+    }
+    updateClock(); setInterval(updateClock, 15000);
+
+    // ─── Shared State & Audio ─────────────────────────────────
+    const tracks = [
+      { title: 'Stitches', artist: 'Shawn Mendes', src: 'songs/Shawn Mendes - Stitches (Official Music Video).mp3', dur: 206, art: 'shawn-mendes.jpg' },
+      { title: 'Losin Control', artist: 'Russ', src: 'songs/Russ - Losin Control (Official Video).mp3', dur: 238, art: 'losin-control.jpg' },
+      { title: 'Starboy', artist: 'The Weeknd, Daft Punk', src: 'songs/The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk.mp3', dur: 250, art: 'https://i.scdn.co/image/ab67616d0000b2734718e2b124f79258be7bc452' }
+    ];
+    const state = {
+      isPlaying: false,
+      trackIdx: 0,
+      current: 0,
+      theme: 'classic',
+      get duration() { return audio.duration && !isNaN(audio.duration) ? Math.floor(audio.duration) : tracks[this.trackIdx].dur; }
+    };
+
+    const audio = new Audio();
+    audio.addEventListener('timeupdate', () => {
+      state.current = audio.currentTime;
+      renderProgress();
+    });
+    audio.addEventListener('ended', nextTrack);
+
+    function fmtTime(s) {
+      if (isNaN(s)) return "0:00";
+      s = Math.floor(s);
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    function renderProgress() {
+      const pct = (state.duration > 0 ? (state.current / state.duration * 100) : 0).toFixed(2) + '%';
+      document.querySelectorAll('.sd-fill').forEach(el => el.style.width = pct);
+      document.querySelectorAll('.sd-time-curr').forEach(el => el.textContent = fmtTime(state.current));
+      document.querySelectorAll('.sd-time-dur').forEach(el => el.textContent = fmtTime(state.duration));
+      document.querySelectorAll('.sd-time-rem').forEach(el => el.textContent = '-' + fmtTime(Math.max(0, state.duration - state.current)));
+    }
+
+    function renderTrack() {
+      const t = tracks[state.trackIdx];
+      audio.src = t.src;
+      if (state.isPlaying) {
+        audio.play().catch(e => console.log('Autoplay prevented', e));
+      }
+
+      document.querySelectorAll('.sd-track').forEach(el => el.textContent = t.title);
+      document.querySelectorAll('.sd-artist').forEach(el => el.textContent = t.artist);
+      document.querySelectorAll('.sd-classic-art, .sd-minimal-art, .sd-vinyl-center').forEach(el => {
+        el.style.backgroundImage = `url('${t.art}')`;
+      });
+      // Also update the float player art panel and popup v2 art
+      document.querySelectorAll('.fp-art-panel').forEach(el => {
+        el.style.backgroundImage = `url('${t.art}')`;
+      });
+      // Update popup background art
+      document.querySelectorAll('.sd-popup-bg-art').forEach(el => {
+        el.style.backgroundImage = `url('${t.art}')`;
+      });
+      state.current = 0;
+      renderProgress();
+    }
+
+    function renderPlayState() {
+      const playing = state.isPlaying;
+      const pausePath = 'M6 19h4V5H6v14zm8-14v14h4V5h-4z';
+      const playPath = 'M8 5v14l11-7z';
+      document.querySelectorAll('.sd-play').forEach(el => {
+        const svgIcon = el.querySelector('.sd-play-icon');
+        if (svgIcon) {
+          svgIcon.querySelector('path').setAttribute('d', playing ? pausePath : playPath);
+        } else {
+          el.textContent = playing ? '⏸' : '▶';
+        }
+      });
+      document.querySelectorAll('.sd-vinyl-disc').forEach(v => v.style.animationPlayState = playing ? 'running' : 'paused');
+      document.querySelectorAll('.sd-tonearm').forEach(t => t.classList.toggle('playing', playing));
+    }
+
+    function el(id) { return document.getElementById(id); }
+
+    function setTheme(t) {
+      state.theme = t;
+
+      const themeMenu = document.getElementById('theme-menu');
+      if (themeMenu) {
+        themeMenu.querySelectorAll('.dropdown-item').forEach(item => {
+          item.classList.toggle('selected', item.dataset.theme === t);
+        });
+      }
+
+      // Menu bar player / generic widgets
+      document.querySelectorAll('.sd-player, .mb-player-wrapper').forEach(el => {
+        const classes = Array.from(el.classList).filter(c => !c.startsWith('sd-theme-') && c !== 'sd-player');
+        classes.push(`sd-theme-${t}`);
+        el.className = classes.join(' ').trim();
+      });
+
+      // Floating window theme
+      const fp = document.getElementById('float-player');
+      if (fp) {
+        fp.className = `float-player theme-${t}`;
+      }
+
+      closeThemeMenu();
+      renderTrack();
+    }
+
+    function toggleThemeMenu(e) {
+      e.stopPropagation();
+      el('theme-menu').classList.toggle('open');
+    }
+
+    function closeThemeMenu() { el('theme-menu').classList.remove('open'); }
+
+    function togglePlay(e) {
+      if (e) e.stopPropagation();
+      state.isPlaying = !state.isPlaying;
+      if (state.isPlaying) audio.play().catch(err => console.log(err));
+      else audio.pause();
+      renderPlayState();
+    }
+
+    function nextTrack(e) {
+      if (e) e.stopPropagation();
+      state.trackIdx = (state.trackIdx + 1) % tracks.length;
+      renderTrack();
+    }
+
+    function prevTrack(e) {
+      if (e) e.stopPropagation();
+      state.trackIdx = (state.trackIdx - 1 + tracks.length) % tracks.length;
+      renderTrack();
+    }
+
+    function popupSeek(e) {
+      e.stopPropagation();
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      state.current = pct * state.duration;
+      audio.currentTime = state.current;
+      if (!state.isPlaying) renderProgress(); // Update visual immediately
+    }
+
+    let popupOpen = false;
+
+    function toggleMenuPopup(e) {
+      e.stopPropagation();
+      popupOpen = !popupOpen;
+      el('mb-popup').classList.toggle('open', popupOpen);
+      el('mb-spotdock-btn').classList.toggle('active', popupOpen);
+    }
+
+    let dragging = false, dragOffX = 0, dragOffY = 0;
+    el('float-player').onmousedown = e => {
+      if (e.target.closest('.fp-ctrl-btn, .fp-ctrl-play, .fp-bar-track')) return;
+      dragging = true;
+      dragOffX = e.clientX - el('float-player').offsetLeft;
+      dragOffY = e.clientY - el('float-player').offsetTop;
+    };
+
+    document.onmousemove = e => {
+      if (!dragging) return;
+      const fp = el('float-player');
+      const wall = el('desktop-wallpaper');
+      if (!wall || !fp) return;
+
+      const wallRect = wall.getBoundingClientRect();
+      const parentRect = fp.parentElement.getBoundingClientRect();
+
+      // Calculate boundaries relative to float-player's offset parent
+      const minX = wallRect.left - parentRect.left;
+      const minY = wallRect.top - parentRect.top;
+      const maxX = wallRect.right - parentRect.left - fp.offsetWidth;
+      const maxY = wallRect.bottom - parentRect.top - fp.offsetHeight;
+
+      let newX = e.clientX - dragOffX;
+      let newY = e.clientY - dragOffY;
+
+      newX = Math.max(minX, Math.min(newX, maxX));
+      newY = Math.max(minY, Math.min(newY, maxY));
+
+      fp.style.left = newX + 'px';
+      fp.style.top = newY + 'px';
+      fp.style.transform = 'none';
+    };
+    document.onmouseup = () => dragging = false;
+
+    document.onclick = () => {
+      closeThemeMenu();
+      if (typeof popupOpen !== 'undefined' && popupOpen) {
+        popupOpen = false;
+        el('mb-popup').classList.remove('open');
+        el('mb-spotdock-btn').classList.remove('active');
+      }
+    };
+
+    setTheme('classic');
+    renderTrack();
+    renderPlayState();
+
+    // Set float player cursor to move
+    document.getElementById('float-player').style.cursor = 'move';
+
+    // Center the floating player in the middle of the desktop wallpaper
+    function centerFloatPlayer() {
+      const wallpaper = document.getElementById('desktop-wallpaper');
+      const fp = document.getElementById('float-player');
+      if (wallpaper && fp) {
+        const wpW = wallpaper.offsetWidth;
+        const wpH = wallpaper.offsetHeight;
+        const fpW = fp.offsetWidth;
+        const fpH = fp.offsetHeight;
+        // Account for the menu bar height
+        const menuBarH = 28;
+        fp.style.left = Math.round((wpW - fpW) / 2) + 'px';
+        fp.style.top = Math.round(menuBarH + (wpH - menuBarH - fpH) / 2) + 'px';
+        fp.style.transform = 'none';
+      }
+    }
+    requestAnimationFrame(() => {
+      requestAnimationFrame(centerFloatPlayer);
+    });
+    // ─── Live Waveform Canvas ───────────────────────────────
+    function initWaveCanvas() {
+      const canvases = document.querySelectorAll('#live-wave-canvas, .wave-canvas');
+      if (canvases.length === 0) return;
+
+      const ctxs = [];
+      canvases.forEach(canvas => {
+        ctxs.push({
+          canvas: canvas,
+          ctx: canvas.getContext('2d'),
+          width: 0,
+          height: 0
+        });
+      });
+
+      let dpr;
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        ctxs.forEach(obj => {
+          const rect = obj.canvas.getBoundingClientRect();
+          obj.width = rect.width;
+          obj.height = rect.height || 24; // fallback
+          if (obj.width === 0) obj.width = obj.canvas.parentElement ? obj.canvas.parentElement.offsetWidth : 150;
+          obj.canvas.width = obj.width * dpr;
+          obj.canvas.height = obj.height * dpr;
+          obj.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
+          obj.ctx.scale(dpr, dpr);
+        });
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+      setTimeout(resize, 150);
+
+      const lines = [
+        { amp: 10, freq: 0.02, speed: 0.06, opacity: 0.8, yOffset: 0 },
+        { amp: 14, freq: 0.015, speed: 0.04, opacity: 0.5, yOffset: 5 },
+        { amp: 8, freq: 0.025, speed: 0.08, opacity: 0.3, yOffset: -5 },
+        { amp: 12, freq: 0.01, speed: 0.05, opacity: 0.4, yOffset: 10 }
+      ];
+
+      function draw() {
+        const dotSpacing = 4;
+        const dotSize = 1.0;
+
+        ctxs.forEach(obj => {
+          if (obj.width === 0) return;
+
+          if (!obj.phase) obj.phase = 0;
+          if (obj.canvas.id === 'live-wave-canvas' || state.isPlaying) {
+            obj.phase += 0.05;
+          } else {
+            obj.phase += 0.005; // Slow idle movement
+          }
+
+          const { ctx, width, height } = obj;
+          ctx.clearRect(0, 0, width, height);
+
+          const scaleAmp = (height > 30) ? 1.0 : (height / 30);
+          const centerY = height / 2;
+
+          lines.forEach((line) => {
+            ctx.fillStyle = `rgba(191, 90, 242, ${line.opacity})`;
+
+            for (let x = 0; x < width; x += dotSpacing) {
+              const y = centerY + (line.yOffset * scaleAmp) +
+                Math.sin(x * line.freq + obj.phase * line.speed) * (line.amp * scaleAmp) +
+                Math.sin(x * line.freq * 0.5 + obj.phase * 0.3) * (line.amp * 0.5 * scaleAmp);
+
+              ctx.beginPath();
+              ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+              ctx.fill();
+
+              if (height > 40) {
+                ctx.fillStyle = `rgba(191, 90, 242, ${line.opacity * 0.15})`;
+                ctx.beginPath();
+                ctx.arc(x, y + 15 * scaleAmp, dotSize, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = `rgba(191, 90, 242, ${line.opacity})`;
+              }
+            }
+          });
+        });
+
+        requestAnimationFrame(draw);
+      }
+
+      draw();
+    }
+    // Run after DOM is ready to ensure interactions are immediate
+    document.addEventListener('DOMContentLoaded', () => {
+      initWaveCanvas();
+
+      // Intersection Observer for scroll animations
+      const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.15
+      };
+
+      const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll('.scroll-reveal').forEach((el, index) => {
+        // Apply staggered delay for grid children automatically
+        if (el.parentElement.classList.contains('bento-grid') || el.parentElement.classList.contains('layouts-grid')) {
+          el.style.transitionDelay = `${(index % 3) * 0.1}s`;
+        }
+        observer.observe(el);
+      });
+
+      // --- Bento Spotlight Logic ---
+      document.querySelectorAll('.bento-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          card.style.setProperty('--mouse-x', `${x}px`);
+          card.style.setProperty('--mouse-y', `${y}px`);
+        });
+      });
+
+      // --- Scroll Nav Visibility ---
+      const scrollNav = document.getElementById('scroll-nav');
+      const mainNav = document.getElementById('main-nav');
+
+      window.addEventListener('scroll', () => {
+        const heroHeight = document.getElementById('hero').offsetHeight;
+        // Appear exactly after scrolling past the MacBook hero section
+        if (window.scrollY > heroHeight) {
+          if (scrollNav) scrollNav.classList.add('is-active');
+          if (mainNav) mainNav.classList.add('nav-fade-out');
+        } else {
+          if (scrollNav) scrollNav.classList.remove('is-active');
+          if (mainNav) mainNav.classList.remove('nav-fade-out');
+        }
+      }, { passive: true });
+
+      // --- MacBook Simulation Elements ---
+      const macScreen = document.querySelector('.macbook-screen');
+      const macFrame = document.querySelector('.macbook-frame');
+      const macBase = document.querySelector('.macbook-base');
+      const desktopSim = document.querySelector('.desktop-sim');
+      const floatPlayer = document.querySelector('#float-player');
+
+      let currentProgress = 0;
+      let targetProgress = 0;
+
+      // --- Selection Hints Logic ---
+      const mbThemeBtn = document.querySelector('#mb-theme-btn');
+      const mbSpotBtn = document.querySelector('#mb-spotdock-btn');
+      const mbHints = document.querySelectorAll('.mb-hint');
+      let hintsDismissed = false;
+
+      const dismissHints = () => {
+        hintsDismissed = true;
+        mbHints.forEach(h => h.classList.remove('visible'));
+      };
+
+      if (mbThemeBtn) {
+        mbThemeBtn.addEventListener('click', dismissHints);
+      }
+      if (mbSpotBtn) {
+        mbSpotBtn.addEventListener('click', dismissHints);
+      }
+
+      const updateMacAnimation = () => {
+        if (!macScreen || !desktopSim) return;
+
+        // Ensure hints are queried even if script executes fast
+        const activeHints = document.querySelectorAll('.mb-hint');
+
+        const rect = desktopSim.getBoundingClientRect();
+        const winH = window.innerHeight;
+
+        // Calculate Target Progress based on scroll from top
+        // Accelerated travel distance to reach 90 degrees sooner
+        const travelDistance = 450;
+        let progress = window.scrollY / travelDistance;
+        targetProgress = Math.max(0, Math.min(1, progress));
+
+        // Smoothing (LERP)
+        currentProgress += (targetProgress - currentProgress) * 0.12;
+
+        // --- STORY PHASE MAPPING ---
+        const pulseCurve = document.querySelector('.hero-pulse-curve');
+
+        // Phase 1: Lid Opening & Text Fade
+        const pLid = currentProgress;
+        const easedLid = 1 - Math.pow(1 - pLid, 2);
+        const rotation = 80 - (easedLid * 80);
+        const lidOpacity = 0.8 + (easedLid * 0.2);
+        const scale = 0.96 + (easedLid * 0.04);
+
+        // Green Curve Sync: Fades out as lid opens
+        if (pulseCurve) {
+          const curveOpacity = Math.max(0, 1 - (pLid * 2.5)); // Fades out faster than the lid finishes
+          pulseCurve.style.opacity = curveOpacity * 0.7;
+          pulseCurve.style.transform = `translateY(${pLid * -30}px)`;
+        }
+
+        // Phase 2: Menu Bar Focus
+        if (currentProgress > 0.45 && currentProgress < 0.95) {
+          mbSpotBtn.classList.add('story-pulse');
+        } else {
+          mbSpotBtn.classList.remove('story-pulse');
+        }
+
+        // Phase 4: Floating Player [0.2 - 0.7]
+        const pPlayer = Math.max(0, Math.min(1, (currentProgress - 0.2) / 0.5));
+        if (pPlayer > 0.05) {
+          floatPlayer.classList.add('story-visible');
+          floatPlayer.style.opacity = pPlayer;
+          floatPlayer.style.transform = `translateY(${(1 - pPlayer) * 20}px) scale(${0.96 + pPlayer * 0.04})`;
+        } else {
+          floatPlayer.classList.remove('story-visible');
+          floatPlayer.style.opacity = 0;
+        }
+
+        // --- HINT LOGIC ---
+        // Session-based: shows if open enough and NOT yet clicked in this session
+        if (pLid >= 0.7 && !hintsDismissed) {
+          activeHints.forEach(h => h.classList.add('visible'));
+        } else {
+          activeHints.forEach(h => h.classList.remove('visible'));
+        }
+
+        // Lighting & Frame
+        const glareOpacity = Math.sin(easedLid * Math.PI) * 0.6;
+        const baseGlow = easedLid * 1.0;
+
+        macScreen.style.transform = `rotateX(${rotation}deg)`;
+        macFrame.style.transform = `scale(${scale})`;
+        macFrame.style.opacity = lidOpacity;
+        macScreen.style.setProperty('--lid-glare', glareOpacity);
+        macBase.style.setProperty('--base-glow', baseGlow);
+
+        if (pLid >= 0.99) {
+          macScreen.classList.add('lid-fully-open');
+        } else {
+          macScreen.classList.remove('lid-fully-open');
+        }
+
+        requestAnimationFrame(updateMacAnimation);
+      };
+
+      updateMacAnimation();
+
+      // Lyrics Sync Simulation
+      const lyricLines = document.querySelectorAll('.lyrics-preview-box .l-line');
+      if (lyricLines.length > 0) {
+        let currentLine = 1;
+        setInterval(() => {
+          lyricLines[currentLine].classList.remove('active');
+          currentLine = (currentLine + 1) % lyricLines.length;
+          lyricLines[currentLine].classList.add('active');
+        }, 2500);
+      }
+
+      // Magnetic Button Physics
+      document.querySelectorAll('.magnetic').forEach(btn => {
+        btn.addEventListener('mousemove', e => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+          b.stnsform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+        });
+        btn.addEventListener('mouseleave', () => {
+          btn.style.transform = '';
+        });
+      });
+    });
+
+    // Magic Move: Set theme and scroll up to view it fully open
+    function tryTheme(t) {
+      setTheme(t);
+      // Scroll to 450px where the MacBook lid is exactly 90 degrees open
+      window.scrollTo({ top: 450, behavior: 'smooth' });
+    }
+  </script>
+</body>
+
+</html>
