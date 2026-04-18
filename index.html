@@ -3277,7 +3277,7 @@
     /* ─── DOWNLOAD CTA ─── */
     #cta {
       text-align: center;
-      padding: 81px 38px;
+      padding: 74px 34px;
       position: relative;
       overflow: hidden;
     }
@@ -3288,14 +3288,14 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 420px;
-      height: 210px;
+      width: 382px;
+      height: 190px;
       background: radial-gradient(ellipse, rgba(10, 132, 255, 0.1) 0%, transparent 70%);
       pointer-events: none;
     }
 
     .cta-h2 {
-      font-size: clamp(1.7rem, 3.8vw, 2.9rem);
+      font-size: clamp(1.55rem, 3.42vw, 2.62rem);
       font-weight: 700;
       letter-spacing: -0.04em;
       line-height: 1.05;
@@ -3313,7 +3313,7 @@
     }
 
     .cta-sub {
-      font-size: 0.89rem;
+      font-size: 0.8rem;
       color: var(--text2);
       font-weight: 400;
       margin-bottom: 28px;
@@ -3934,7 +3934,69 @@
 
   </section>
 
+  <!-- ─── FEATURES ─── -->
+  <section id="features" style="background:var(--bg2)">
+    <div class="section">
+      <div style="text-align:center; margin-bottom: 0;">
+        <h2 class="section-h2" style="text-align:center;">Every detail, intentional.</h2>
+        <p class="section-desc" style="margin: 0 auto; text-align:center;">Built pixel-by-pixel for macOS. Every interaction deliberate, every animation purposeful.</p>
+      </div>
 
+      <div class="bento-grid">
+        <div class="bento-card wide scroll-reveal">
+          <div class="bento-icon">♪</div>
+          <div class="bento-title">Lyrics</div>
+          <div class="bento-desc">See every line in sync, across every layout.</div>
+          <div
+            style="margin-top:18px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);padding:14px;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.18);margin-bottom:8px;text-align:center">Come and go as
+              you please</div>
+            <div
+              style="font-size:14px;font-weight:600;text-align:center;color:rgba(255,255,255,0.95);margin-bottom:8px;">
+              Arenas packed out</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.18);text-align:center">Next line fades in smoothly</div>
+          </div>
+        </div>
+
+        <div class="bento-card scroll-reveal">
+          <div class="bento-icon green">〜</div>
+          <div class="bento-title">Live Waveform</div>
+          <div class="bento-desc">Animated audio visualizer synced to your music in real time.</div>
+          <div class="wave-canvas-container">
+            <canvas id="live-wave-canvas"></canvas>
+          </div>
+        </div>
+
+        <div class="bento-card scroll-reveal">
+          <div class="bento-icon green">🪟</div>
+          <div class="bento-title">Multiple layouts</div>
+          <div class="bento-desc">Switch between Classic, Minimal, and Vinyl to match your style.</div>
+        </div>
+
+        <div class="bento-card scroll-reveal">
+          <div class="bento-icon">⌨</div>
+          <div class="bento-title">Floating player</div>
+          <div class="bento-desc">Keep your music in view, wherever you place it.</div>
+          <div style="display:flex;gap:5px;margin-top:14px;flex-wrap:wrap;">
+            <span
+              style="font-family:monospace;font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);color:rgba(255,255,255,.55)">Space</span>
+            <span
+              style="font-family:monospace;font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);color:rgba(255,255,255,.55)">⌘
+              →</span>
+            <span
+              style="font-family:monospace;font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);color:rgba(255,255,255,.55)">⌘
+              L</span>
+          </div>
+        </div>
+
+        <div class="bento-card scroll-reveal">
+          <div class="bento-icon green">◎</div>
+          <div class="bento-title">Menu bar control</div>
+          <div class="bento-desc">Access and control your music without leaving your workflow.</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ─── LAYOUTS ─── -->
   <section id="layouts" style="background:var(--bg)">
@@ -4033,8 +4095,7 @@
   <section id="lyrics" class="lyrics-section">
     <div class="lyrics-container">
       <div class="lyrics-content">
-        <div class="section-label">Lyrics Mode</div>
-        <h2 class="section-h2">See every word,<br>as it plays.</h2>
+        <h2 class="section-h2" style="font-size: clamp(2.2rem, 4.4vw, 3.3rem);">See every word,<br>as it plays.</h2>
         <p class="section-desc">Classic, Minimal, or Vinyl — every mode supports lyrics view. Switch instantly with a
           click and watch your player transform as the words follow the beat.</p>
       </div>
@@ -4454,8 +4515,8 @@
 
       window.addEventListener('scroll', () => {
         const heroHeight = document.getElementById('hero').offsetHeight;
-        // Appear exactly after scrolling past the MacBook hero section
-        if (window.scrollY > heroHeight) {
+        // Appear exactly after scrolling past the MacBook hero section (adjusted -20px)
+        if (window.scrollY > heroHeight - 20) {
           if (scrollNav) scrollNav.classList.add('is-active');
           if (mainNav) mainNav.classList.add('nav-fade-out');
         } else {
